@@ -45,10 +45,63 @@ class Grid(typing.Generic[T]):
     def __repr__(self):
         return self.__str__()
 
+DIRECTIONS_NESW = "NESW"
+
+DIRECTION_TO_DELTA = {
+    "N": [-1, 0],
+    "E": [0, 1],
+    "S": [1, 0],
+    "W": [0, -1]
+}
+
+def add_iters(*iters: typing.Iterable) -> typing.Iterator:
+    return (sum(a) for a in zip(*iters))
+
+class Location(typing.Iterable[int]):
+    def __init__(self, *coordinates):
+        self._tuple = tuple(coordinates)
+        self._d = len(self._tuple)
+    
+    def neighbors(self, directions = DIRECTIONS_NESW) -> typing.List[Location]:
+        return [self + DIRECTION_TO_DELTA[direction] for direction in directions]
+
+    def __add__(self, delta):
+        return Location(*add_iters(self._tuple, delta))
+    
+    def __iter__(self):
+        return self._tuple.__iter__()
+
+    def __neg__(self):
+        negated = (-d for d in self._tuple)
+        return Location(*negated)
+
+    def __eq__(self, other):
+        return isinstance(self, type(other)) and \
+            self._d == other._d and \
+            all(a == b for a, b in zip(self._tuple, other._tuple))
+    
+    def __getitem__(self, x: int) -> int:
+        return self._tuple[x]
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return self._tuple.__hash__() 
+
+    def __str__(self):
+        return f"{self._tuple}"
+
+    def __repr__(self):
+        return self.__str__()
+
 ### conversion ###
 
 def ints(s: str) -> typing.List[int]:
     return list(map(int, re.findall(r"-?\d+", s)))
+
+def digits(s: str) -> typing.List[int]:
+    return list(map(int, re.findall(r"\d", s)))
 
 ################### scaffolding #################################
 

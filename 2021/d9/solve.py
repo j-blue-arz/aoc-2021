@@ -11,35 +11,16 @@ from util import *
 YEAR = 2021
 DAY = 9
 
-deltas = [
-    (-1, 0),
-    (0, 1),
-    (1, 0),
-    (0, -1)
-]
-
-def addd(a, b):
-    return tuple(sum(c) for c in zip(a, b))
-
-def digits(s):
-    return list(map(int, s))
-
 def solve1(input: str):
     lines = input.splitlines()
-    
-    lines = [digits(line) for line in lines]
-
-    def is_inside(loc):
-        row, column = loc
-        return 0 <= row < len(lines) and 0 <= column < len(lines[0])
-
-    def neighbors(r, c):
-        return [addd((r, c), d) for d in deltas if is_inside(addd((r, c), d))]
-
     result = 0
+    lines = [digits(line) for line in lines]
+    def is_inside(location):
+        row, column = location
+        return 0 <= row < len(lines) and 0 <= column < len(lines[0])
     for r in range(len(lines)):
         for c in range(len(lines[0])):
-            if all(lines[neigh[0]][neigh[1]] > lines[r][c] for neigh in neighbors(r, c)):
+            if all(lines[neigh[0]][neigh[1]] > lines[r][c] for neigh in Location(r, c).neighbors() if is_inside(neigh)):
                 result += lines[r][c] + 1
     
     return result
@@ -49,32 +30,28 @@ def solve1(input: str):
 def solve2(input: str):
     lines = input.splitlines()
     lines = [digits(line) for line in lines]
-
-    def is_inside(loc):
-        row, column = loc
+    def is_inside(location):
+        row, column = location
         return 0 <= row < len(lines) and 0 <= column < len(lines[0])
-
-    def neighbors(r, c):
-        return [addd((r, c), d) for d in deltas if is_inside(addd((r, c), d))]
-
+    
     def bfs(location):
         found = set()
-        current = [location]
-        while current:
-            nextl = []
-            for node in current:
-                for child in neighbors(node[0], node[1]):
-                    if child not in found and lines[child[0]][child[1]] > lines[node[0]][node[1]] and lines[child[0]][child[1]] != 9:
+        current_layer = [location]
+        while current_layer:
+            next_layer = []
+            for node in current_layer:
+                for child in node.neighbors():
+                    if is_inside(child) and child not in found and lines[child[0]][child[1]] > lines[node[0]][node[1]] and lines[child[0]][child[1]] != 9:
                         found.add(child)
-                        nextl.append(child)
-            current = nextl
+                        next_layer.append(child)
+            current_layer = next_layer
         return found
 
     all_found = []
     for r in range(len(lines)):
         for c in range(len(lines[0])):
-            if all(lines[neigh[0]][neigh[1]] > lines[r][c] for neigh in neighbors(r, c)):
-                found = bfs((r, c))
+            if all(lines[neigh[0]][neigh[1]] > lines[r][c] for neigh in Location(r, c).neighbors() if is_inside(neigh)):
+                found = bfs(Location(r, c))
                 all_found.append(len(found) + 1)
     
     all_found.sort()
